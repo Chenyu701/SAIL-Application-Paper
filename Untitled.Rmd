@@ -1,0 +1,226 @@
+---
+title: "SAIL Application Paper"
+output: html_document
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,results='hide',echo=FALSE,message=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(ggcorrplot)
+library(patchwork)
+```
+# Introduction
+
+College basketball has been popular for decades, this project is to explore trends in recent college basketball data. 
+
+Since the performance of all kinds of sports is improving over time. A natural question will be: Do basketball teams change their performance and way of playing within these years? (Q1)
+
+As I look through the data, I found that the champions and 2nds always belong to schools from certain Athletic Conferences, so I wonder if there is an overall performance difference between Athletic Conferences(Q2)
+
+# Data
+
+The data set I used is College Basketball Dataset collected by ANDREW SUNDBERG, I chose the data from 2013-2019, which contains 2456 observations and 24 columns. The main variables I used are TOR(turnover rate),DRB(Offensive Rebound Rate Allowed) FTRD(Free Throw Rate Allowed), 2P_O(Two-Point Shooting Percentage),3P_O(Three-Point Shooting Percentage),EFGD(Effective Field Goal Percentage Allowed)
+
+```{r}
+
+```
+
+
+```{r,results='hide',echo=FALSE,message=FALSE}
+fulldata<-read_csv("cbb.csv")
+```
+
+
+```{r,echo=FALSE}
+head(fulldata)
+```
+
+
+
+# Results
+
+Q1:As graphs showed below, the TOR DRB and FTRD have all decreased by year, showing that teams are now playing more carefully and have more possessions. The increase of 2P_O, 3P_O, and EFGO suggests that teams are having higher shooting accuracy. 
+
+
+
+
+```{r,results='hide',echo=FALSE,message=FALSE}
+
+fulldata4=fulldata %>%
+  group_by(YEAR) %>%
+  summarise_at(vars(3:20),list(mean))
+```
+
+```{r fig1, fig.height = 7, fig.width = 14, fig.align = "center",echo=FALSE,message=FALSE}
+
+
+  
+#colnames(fulldata4)
+g1=fulldata4%>%ggplot(aes(x=YEAR,y=`TOR`))+geom_point()+geom_smooth(method = 'lm')
+g2=fulldata4%>%ggplot(aes(x=YEAR,y=`EFG_O`))+geom_point()+geom_smooth(method = 'lm')
+#fulldata4%>%ggplot(aes(x=YEAR,y=`TORD`))+geom_point()+geom_smooth(method = 'lm')
+g3=fulldata4%>%ggplot(aes(x=YEAR,y=`DRB`))+geom_point()+geom_smooth(method = 'lm')
+g4=fulldata4%>%ggplot(aes(x=YEAR,y=`FTRD`))+geom_point()+geom_smooth(method = 'lm')
+g5=fulldata4%>%ggplot(aes(x=YEAR,y=`2P_O`))+geom_point()+geom_smooth(method = 'lm')
+g6=fulldata4%>%ggplot(aes(x=YEAR,y=`3P_O`))+geom_point()+geom_smooth(method = 'lm')
+
+
+g1+g2+g3+g4
+
+
+
+```
+```{r fig2, fig.height = 5, fig.width = 17, fig.align = "center",echo=FALSE,message=FALSE}
+g5+g6
+```
+
+
+```{r,results='hide',echo=FALSE,message=FALSE}
+dfpost=table(fulldata$CONF, fulldata$POSTSEASON)
+
+dfpost=as.data.frame.matrix(dfpost) 
+dfpost
+```
+```{r,results='hide',echo=FALSE,message=FALSE}
+dfpost <- tibble::rownames_to_column(dfpost, "Athletic_Conference")
+dfpost
+```
+
+
+
+Q2: Here ACC and BE almost collect all the champions, whereas B10 has three 2nds but no champions, some other Athletic Conferences, like ind, GWC etc, never got into R32 or E8,
+
+
+```{r fig3, fig.height = 7, fig.width = 14, fig.align = "center",echo=FALSE,message=FALSE}
+P1<-dfpost%>%ggplot()+geom_bar(aes(x=reorder(`Athletic_Conference`,-`Champions`),y=`Champions`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+P2<-dfpost%>%ggplot()+geom_bar(aes(x=reorder(`Athletic_Conference`,-`2ND`),y=`2ND`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+P3<-dfpost%>%ggplot()+geom_bar(aes(x=reorder(`Athletic_Conference`,-`F4`),y=`F4`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+P4<-dfpost%>%ggplot()+geom_bar(aes(x=reorder(`Athletic_Conference`,-`E8`),y=`E8`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+P5<-dfpost%>%ggplot()+geom_bar(aes(x=reorder(`Athletic_Conference`,-`R32`),y=`R32`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+P6<-dfpost%>%ggplot()+geom_bar(aes(x=reorder(`Athletic_Conference`,-`R64`),y=`R64`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+
+
+P1+P2+P3+P4+P5+P6+plot_annotation(title = 'Count of team placements for each Athletic Conference form 2013 to 2019',
+                  theme = theme(plot.title = element_text(size = 18))) & 
+  theme(text = element_text('mono'))
+
+
+```
+
+
+```{r,echo=FALSE,message=FALSE}
+
+
+#fulldata2=fulldata[fulldata$YEAR==2019,]
+
+fulldata %>%
+    count(CONF) %>%
+    mutate(CONF = fct_reorder(CONF, n, .desc = TRUE)) %>%
+    ggplot(aes(x = CONF, y = n)) + geom_bar(stat = 'identity')+theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1),axis.title.x = element_blank())+ggtitle("Sum of number of teams played in each Athletic Conference from 2013-2019")
+```
+
+
+
+
+
+The graph below indicates the difference between Athletic Conferences exists, as GWC, ind, etc. have a high TOR and DRB,  indicating teams in these Athletic Conferences have weaker defenses and weaker control of the ball but some of those teams have a high 2P_O, and 3P_O, this lead to an interesting question whether turn over rate is more important than shooting accuracy in the game for future discussion.
+
+
+
+```{r fig4, fig.height = 7, fig.width = 14, fig.align = "center",echo=FALSE,message=FALSE}
+fulldata3=fulldata %>%
+  group_by(CONF) %>%
+  summarise_at(vars(3:20),list(mean))
+
+#fulldata3$BARTHAG=fulldata3$BARTHAG*100
+
+
+
+I1=fulldata3%>%ggplot()+geom_bar(aes(x=reorder(`CONF`,-`TOR`),y=`TOR`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+I2=fulldata3%>%ggplot()+geom_bar(aes(x=reorder(`CONF`,-`2P_O`),y=`2P_O`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+I3=fulldata3%>%ggplot()+geom_bar(aes(x=reorder(`CONF`,-`3P_O`),y=`3P_O`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 50, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+I5=fulldata3%>%ggplot()+geom_bar(aes(x=reorder(`CONF`,-`ORB`),y=`ORB`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 50, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+I6=fulldata3%>%ggplot()+geom_bar(aes(x=reorder(`CONF`,-`DRB`),y=`DRB`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 50, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+
+I4=fulldata3%>%ggplot()+geom_bar(aes(x=reorder(`CONF`,-`2P_D`),y=`2P_D`),stat='identity',position="dodge")+theme(axis.text.x = element_text(angle = 50, vjust = 0.5, hjust=1),axis.title.x = element_blank())
+I1+I2+I3+I4+I5+I6
+```
+
+# Conclusion
+
+From the result above, we may conclude that the performance of college basketball is improving through the year and there is a performance difference between different Athletic Conferences. 
+
+
+
+
+
+```{r,results='hide',echo=FALSE,message=FALSE,fig.show='hide'}
+l_1=fulldata[fulldata$POSTSEASON=="2ND",]
+w_1=fulldata[fulldata$POSTSEASON=="Champions",]
+l2=l_1[1:7,5:20]
+#colMeans(l2)
+w2=w_1[1:7,5:20]
+colMeans(w2)-colMeans(l2)
+
+(colMeans(w2)-colMeans(l2))/colMeans(l2)
+```
+
+ 
+
+
+
+```{r,results='hide',echo=FALSE,message=FALSE,fig.show='hide'}
+Turnovers=tapply(fulldata$EFG_O, fulldata$CONF, FUN=mean,decrease=TRUE)
+s1=sort(Turnovers, decreasing = TRUE)
+class(s1)
+```
+
+
+```{r,results='hide',echo=FALSE,message=FALSE,fig.show='hide'}
+fulldata%>%ggplot(aes(x=W,y=ADJOE))+geom_point()
+fulldata%>%ggplot(aes(x=W,y=TOR))+geom_point()
+fulldata%>%ggplot(aes(x=W,y=ORB))+geom_point()
+fulldata%>%ggplot(aes(x=W,y=DRB))+geom_point(alpha=1/2)
+fulldata%>%ggplot(aes(x=W,y=FTR))+geom_point()+geom_smooth(method = lm)
+fulldata%>%ggplot(aes(x=W,y=FTRD))+geom_point()+geom_smooth(method = lm)
+
+```
+
+
+```{r,results='hide',echo=FALSE,message=FALSE,fig.show='hide'}
+fulldata%>%ggplot(aes(x=W,y=`2P_O`))+geom_point()+geom_smooth(method = lm)
+fulldata%>%ggplot(aes(x=W,y=`3P_O`))+geom_point()+geom_smooth(method = lm)
+fulldata%>%ggplot(aes(x=W,y=`3P_D`))+geom_point()+geom_smooth(method = lm)
+```
+
+```{r,results='hide',echo=FALSE,message=FALSE,fig.show='hide'}
+cor1=fulldata[,c("W","ADJOE","ADJDE","BARTHAG","EFG_O","EFG_D","TOR","TORD","ORB","DRB","FTR","FTRD","2P_O","2P_D","3P_O","3P_D","ADJ_T","WAB","YEAR")]
+a1=cor(cor1)
+a1
+ggcorrplot(a1,hc.order = TRUE,
+   outline.col = "white",
+   ggtheme = ggplot2::theme_gray,
+   colors = c("#6D9EC1", "white", "#E46726"))
+```
+
+
+
+
+
+
+
